@@ -12,7 +12,7 @@
 
 #define WIN_NAME   "Tseitr"
 #define WIN_WIDTH  800
-#define WIN_HEIGHT 600
+#define WIN_HEIGHT 640
 
 class Game {
 	std::shared_ptr<Screen> screen = nullptr;

@@ -15,6 +15,7 @@ set(SOURCE_FILES main.cpp
         Screen.hpp
         StartScreen.cpp StartScreen.hpp
         GameScreen.cpp GameScreen.hpp
+        Level.cpp Level.hpp
         )
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/font.ttf" "${CMAKE_BINARY_DIR}/font.ttf" COPYONLY)

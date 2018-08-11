@@ -31,6 +31,7 @@ void StartScreen::update(Game *game) {
 }
 
 void StartScreen::render(Game *game) {
+	SDL_SetRenderDrawColor(game->getRenderer(), 0, 0, 0, 0xFF);
 	SDL_RenderClear(game->getRenderer());
 	SDL_Rect src = {0, 0, text_start_width, text_start_height};
 	SDL_Rect dst = {WIN_WIDTH/2-text_start_width/2, WIN_HEIGHT/2-text_start_height/2, text_start_width, text_start_height};
