@@ -11,10 +11,13 @@ Level::Level() {
 			j = 0;
 		}
 	}
-	//TEST
+}
+
+void Level::generateTest(Game *game) {
+//TEST
 	for(int i = 0; i < 6; i++) {
 		for(int &j : colors[i]) {
-			j = (rand() % 7) + 1;
+			j = game->randomInt(1, 7);
 		}
 	}
 }
@@ -76,6 +79,10 @@ void Level::drawBlock(Game *game, int x, int y, int c) const {
 	SDL_SetRenderDrawColor(game->getRenderer(), col.r, col.g, col.b, 0xff);
 	SDL_Rect rect = {x + 1, y + 1, BLOCK_WIDTH - 2, BLOCK_HEIGHT - 2};
 	SDL_RenderFillRect(game->getRenderer(), &rect);
-	SDL_SetRenderDrawColor(game->getRenderer(), col.r * 0.9F, col.g * 0.9F, col.b * 0.9F, 0xff);
+	SDL_SetRenderDrawColor(game->getRenderer(),
+	                       static_cast<Uint8>(col.r * 0.9F),
+	                       static_cast<Uint8>(col.g * 0.9F),
+	                       static_cast<Uint8>(col.b * 0.9F), 0xf
+	);
 	SDL_RenderDrawRect(game->getRenderer(), &rect);
 }

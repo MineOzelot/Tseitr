@@ -9,7 +9,8 @@
 
 #define FONT_FILE "font.ttf"
 
-Game::Game() {
+Game::Game(): eng(std::random_device()()) {
+
 	win = SDL_CreateWindow(
 			WIN_NAME,
 			SDL_WINDOWPOS_CENTERED,
@@ -42,10 +43,28 @@ void Game::start() {
 
 void Game::loop() {
 	while(isRunning && screen) {
+		input();
 		screen->update(this);
 		screen->render(this);
 	}
 	screen = nullptr;
+}
+
+void Game::input() {
+	SDL_Event event{};
+	while(SDL_PollEvent(&event)) {
+		switch(event.type) {
+			case SDL_QUIT:
+				stop();
+				break;
+			case SDL_WINDOWEVENT:
+				if(event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) pause();
+				if(event.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) resume();
+				break;
+			default: break;
+		}
+		if(screen) screen->handle(this, event);
+	}
 }
 
 void Game::setScreen(std::shared_ptr<Screen> screen_) {
@@ -59,4 +78,9 @@ Game::~Game() {
 	TTF_CloseFont(font24);
 	SDL_DestroyRenderer(ren);
 	SDL_DestroyWindow(win);
+}
+
+int Game::randomInt(int min, int max) {
+	std::uniform_int_distribution<int> distr(min, max);
+	return distr(eng);
 }

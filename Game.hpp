@@ -6,8 +6,9 @@
 #define TSEITR_GAME_HPP
 
 #include <memory>
+#include <random>
 #include <SDL_ttf.h>
-#include "SDL.h"
+#include <SDL.h>
 #include "Screen.hpp"
 
 #define WIN_NAME   "Tseitr"
@@ -23,11 +24,16 @@ class Game {
 	TTF_Font *font24 = nullptr;
 
 	bool isRunning = false;
+
+	std::default_random_engine eng;
 public:
 	Game();
 
 	void start();
 	void stop() { isRunning = false; }
+
+	void pause() { if(screen) screen->pause(); }
+	void resume() { if(screen) screen->resume(); }
 
 	SDL_Window *getWindow() const {
 		return win;
@@ -47,9 +53,12 @@ public:
 		return screen;
 	}
 
+	int randomInt(int min = 0, int max = 100);
+
 	~Game();
 private:
 	void loop();
+	void input();
 };
 
 #endif //TSEITR_GAME_HPP

@@ -20,6 +20,8 @@ class Level {
 public:
 	Level();
 
+	void generateTest(Game *game);
+
 	bool isRowFull(int row) const;
 	void removeRow(int row);
 

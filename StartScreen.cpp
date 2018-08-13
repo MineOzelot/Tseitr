@@ -15,20 +15,16 @@ void StartScreen::init(Game *game) {
 	SDL_QueryTexture(text_start, nullptr, nullptr, &text_start_width, &text_start_height);
 }
 
-void StartScreen::update(Game *game) {
-	SDL_Event event{};
-	while(SDL_PollEvent(&event)) {
-		switch(event.type) {
-			case SDL_QUIT:
-				game->stop();
-				break;
-			case SDL_KEYDOWN:
-				game->setScreen(std::make_shared<GameScreen>());
-				break;
-			default: break;
-		}
+void StartScreen::handle(Game *game, const SDL_Event &event) {
+	switch(event.type) {
+		case SDL_KEYDOWN:
+			game->setScreen(std::make_shared<GameScreen>());
+			break;
+		default: break;
 	}
 }
+
+void StartScreen::update(Game *game) {}
 
 void StartScreen::render(Game *game) {
 	SDL_SetRenderDrawColor(game->getRenderer(), 0, 0, 0, 0xFF);

@@ -5,15 +5,20 @@
 #ifndef TSEITR_GAMESCREEN_HPP
 #define TSEITR_GAMESCREEN_HPP
 
+#include <iostream>
 #include "Screen.hpp"
 #include "Level.hpp"
 
 class GameScreen: public Screen {
 	Level *level = nullptr;
 	bool paused = false;
+
+	SDL_Texture *text_paused = nullptr;
+	SDL_Rect text_paused_rect{};
 public:
 	void init(Game *game) override;
 
+	void handle(Game *game, const SDL_Event &event) override;
 	void update(Game *game) override;
 	void render(Game *game) override;
 

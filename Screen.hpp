@@ -5,12 +5,15 @@
 #ifndef TSEITR_SCREEN_HPP
 #define TSEITR_SCREEN_HPP
 
+#include <SDL_events.h>
+
 class Game;
 
 class Screen {
 public:
 	virtual void init(Game *game) = 0;
 
+	virtual void handle(Game *game, const SDL_Event &event) = 0;
 	virtual void update(Game *game) = 0;
 	virtual void render(Game *game) = 0;
 
