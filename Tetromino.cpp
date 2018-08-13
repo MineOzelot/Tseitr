@@ -19,3 +19,17 @@ Tetromino::Tetromino(int type_): type(type_) {
 		blocks[i] = tetrominoes[type][i];
 	}
 }
+
+void Tetromino::rotate() {
+	for(auto &block : blocks) {
+		std::swap(block.first, block.second);
+		block.second = -block.second;
+	}
+}
+
+void Tetromino::unrotate() {
+	for(auto &block : blocks) {
+		std::swap(block.first, block.second);
+		block.first = -block.first;
+	}
+}

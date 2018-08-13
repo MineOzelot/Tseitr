@@ -35,6 +35,9 @@ public:
 	std::pair<int, int> getBlock(int b) const {
 		return blocks[b];
 	};
+
+	void rotate();
+	void unrotate();
 };
 
 #endif //TSEITR_TETROMINO_HPP

@@ -15,9 +15,28 @@ void GameScreen::init(Game *game) {
 	text_paused_rect.y = 4;
 }
 
-void GameScreen::handle(Game *game, const SDL_Event &event) {}
+void GameScreen::handle(Game *game, const SDL_Event &event) {
+	if(paused) return;
+	switch(event.type) {
+		case SDL_KEYDOWN:
+			if(event.key.keysym.scancode == SDL_SCANCODE_LEFT) {
+				level->moveLeft();
+			} else if(event.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
+				level->moveRight();
+			} else if(event.key.keysym.scancode == SDL_SCANCODE_UP) {
+				level->rotate();
+			} else if(event.key.keysym.scancode == SDL_SCANCODE_DOWN) {
+				level->fall();
+			}
+			break;
+		default: break;
+	}
+}
 
-void GameScreen::update(Game *game) {}
+void GameScreen::update(Game *game) {
+	if(paused) return;
+	level->update(game);
+}
 
 void GameScreen::render(Game *game) {
 	SDL_SetRenderDrawColor(game->getRenderer(), 0xff, 0xff, 0xff, 0xff);

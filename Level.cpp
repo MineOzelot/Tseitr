@@ -50,6 +50,13 @@ SDL_Color Level::getColor(int c) const {
 	}
 }
 
+void Level::update(Game *game) {
+	if(SDL_GetTicks() - last >= tick) {
+		current->setPosition(current->getX(), current->getY() + 1);
+		last = SDL_GetTicks();
+	}
+}
+
 void Level::draw(Game *game, int x, int y) const {
 	SDL_SetRenderDrawColor(game->getRenderer(), 0xfa, 0xfa, 0xfa, 0xff);
 	SDL_Rect rect = {x, y, LEVEL_WIDTH, LEVEL_HEIGHT};
@@ -97,6 +104,31 @@ void Level::drawTetramino(Game *game, int x, int y, const Tetromino *tetromino) 
 		auto block = tetromino->getBlock(i);
 		drawBlock(game, (x + block.first) * BLOCK_WIDTH, (y + block.second) * BLOCK_HEIGHT, tetromino->getType() + 1);
 	}
+}
+
+bool Level::canPass(int xOffset) const {
+	for(int i = 0; i < 4; i++) {
+		int x = current->getX() + current->getBlock(i).first + xOffset;
+		if(x < 0 || x > LEVEL_COLS-1) return false;
+	}
+	return true;
+}
+
+void Level::moveLeft() {
+	if(canPass(-1)) current->setPosition(current->getX() - 1, current->getY());
+}
+
+void Level::moveRight() {
+	if(canPass(1)) current->setPosition(current->getX() + 1, current->getY());
+}
+
+void Level::rotate() {
+	current->rotate();
+	if(!canPass()) current->unrotate();
+}
+
+void Level::fall() {
+
 }
 
 Level::~Level() {

@@ -26,6 +26,9 @@ class Level {
 
 	SDL_Texture *text_next = nullptr;
 	SDL_Rect text_next_rect{};
+
+	Uint32 last = 0;
+	int tick = 1000;
 public:
 	explicit Level(Game *game);
 
@@ -34,9 +37,18 @@ public:
 
 	SDL_Color getColor(int c) const;
 
+	void update(Game *game);
+
 	void draw(Game *game, int x, int y) const;
 	void drawBlock(Game *game, int x, int y, int c) const;
 	void drawTetramino(Game *game, int x, int y, const Tetromino *tetromino) const;
+
+	bool canPass(int xOffset = 0) const;
+
+	void moveLeft();
+	void moveRight();
+	void rotate();
+	void fall();
 
 	int getScore() const {
 		return score;
