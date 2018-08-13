@@ -16,6 +16,7 @@ set(SOURCE_FILES main.cpp
         StartScreen.cpp StartScreen.hpp
         GameScreen.cpp GameScreen.hpp
         Level.cpp Level.hpp
+        Tetromino.cpp Tetromino.hpp
         )
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/font.ttf" "${CMAKE_BINARY_DIR}/font.ttf" COPYONLY)

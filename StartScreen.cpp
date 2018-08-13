@@ -8,11 +8,7 @@
 const char *TEXT_START = "Press any key to start";
 
 void StartScreen::init(Game *game) {
-	SDL_Surface *sur_text = TTF_RenderText_Blended(game->getFont24(), TEXT_START, {255, 255, 255});
-	text_start = SDL_CreateTextureFromSurface(game->getRenderer(), sur_text);
-	SDL_FreeSurface(sur_text);
-
-	SDL_QueryTexture(text_start, nullptr, nullptr, &text_start_width, &text_start_height);
+	text_start = game->renderText(game->getFont24(), TEXT_START, SDL_Color{0xff, 0xff, 0xff, 0xff}, text_start_width, text_start_height);
 }
 
 void StartScreen::handle(Game *game, const SDL_Event &event) {

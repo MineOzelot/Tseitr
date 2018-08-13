@@ -4,6 +4,7 @@
 
 #include "Game.hpp"
 #include "StartScreen.hpp"
+#include "GameScreen.hpp"
 
 #include <iostream>
 
@@ -20,7 +21,6 @@ Game::Game(): eng(std::random_device()()) {
 	);
 
 	ren = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
-	SDL_SetRenderDrawColor(ren, 0, 0, 0, 0xFF);
 
 	font16 = TTF_OpenFont(FONT_FILE, 16);
 	if(!font16) {
@@ -37,7 +37,8 @@ Game::Game(): eng(std::random_device()()) {
 void Game::start() {
 	isRunning = true;
 
-	setScreen(std::make_shared<StartScreen>());
+	//TODO: setScreen(std::make_shared<StartScreen>());
+	setScreen(std::make_shared<GameScreen>());
 	loop();
 }
 
@@ -83,4 +84,12 @@ Game::~Game() {
 int Game::randomInt(int min, int max) {
 	std::uniform_int_distribution<int> distr(min, max);
 	return distr(eng);
+}
+
+SDL_Texture *Game::renderText(TTF_Font *font, const char *text, SDL_Color color, int &w, int &h) const {
+	SDL_Surface *surface = TTF_RenderText_Blended(getFont16(), text, color);
+	SDL_Texture *texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
+	SDL_FreeSurface(surface);
+	SDL_QueryTexture(texture, nullptr, nullptr, &w, &h);
+	return texture;
 }
