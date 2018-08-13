@@ -10,6 +10,7 @@
 class Tetromino {
 	static const std::pair<int, int> tetrominoes[7][4];
 	int type;
+	int rotation = 0;
 	std::pair<int, int> blocks[4];
 
 	int pos_x, pos_y;
