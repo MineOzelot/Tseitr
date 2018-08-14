@@ -23,7 +23,7 @@ Tetromino::Tetromino(int type_): type(type_) {
 }
 
 void Tetromino::rotate() {
-	if(rotateTypes[type] == 0) return;;
+	if(rotateTypes[type] == 0) return;
 	if(rotateTypes[type] == 1 && rotation % 2 == 1) {
 		unrotate();
 	} else {
@@ -36,7 +36,7 @@ void Tetromino::rotate() {
 }
 
 void Tetromino::unrotate() {
-	if(rotateTypes[type] == 0) return;;
+	if(rotateTypes[type] == 0) return;
 	if(rotateTypes[type] == 1 && rotation % 2 == 0) {
 		rotate();
 	} else {

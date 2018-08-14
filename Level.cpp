@@ -7,38 +7,45 @@
 #define TEXT_NEXT "Next:"
 
 #define SCORE_PER_ROW 40
-#define SCORE_SPEED_MULT 0.02F
+#define SCORE_SPEED_MULT 0.05F
 
-Level::Level(Game *game) {
-	for(auto &row : colors) {
-		for(int &j : row) {
-			j = 0;
-		}
-	}
-	current = new Tetromino(game->randomInt(0, 6));
-	current->setPosition(TETROMINO_START_POS_X, TETROMINO_START_POS_Y);
-	next = new Tetromino(game->randomInt(0, 6));
-
-	text_next = game->renderText(game->getFont16(), TEXT_NEXT, SDL_Color{0x10, 0x10, 0x10, 0xff}, text_next_rect.w, text_next_rect.h);
-	text_next_rect.x = 14 * BLOCK_WIDTH;
-	text_next_rect.y = 10;
-}
-
-bool Level::isRowFull(int row) const {
-	for(int c : colors[row]) {
+bool Row::isFull() const {
+	for(int c : colors) {
 		if(c == 0) return false;
 	}
 	return true;
 }
 
-void Level::removeRow(int row) {
-	for(int i = row; i < LEVEL_ROWS; i++) {
-		for(int j = 0; j < LEVEL_COLS; j++) {
-			colors[i][j] = colors[i + 1][j];
-		}
+Level::Level(Game *game) {
+	back = top = new Row();
+	for(int i = 1; i < LEVEL_ROWS; i++) {
+		Row *row = new Row();
+		row->setDown(top);
+		top->setUp(row);
+		top = row;
 	}
-	for(int j = 0; j < LEVEL_COLS; j++) {
-		colors[LEVEL_ROWS - 1][j] = 0;
+
+	next = new Tetromino(game->randomInt(0, 6));
+	nextTetromino(game->randomInt(0, 6));
+
+	text_next = game->renderText(game->getFont16(), TEXT_NEXT, Game::TEXT_COLOR, text_next_rect.w, text_next_rect.h);
+	text_next_rect.x = 14 * BLOCK_WIDTH;
+	text_next_rect.y = 10;
+}
+
+void Level::removeRow(Row *row) {
+	if(row->getUp()) row->getUp()->setDown(row->getDown());
+	else top = row->getDown();
+	if(row->getDown()) row->getDown()->setUp(row->getUp());
+	else back = row->getUp();
+	if(rows <= LEVEL_ROWS) {
+		row->clear();
+		row->setDown(top);
+		top->setUp(row);
+		top = row;
+	} else {
+		rows--;
+		delete row;
 	}
 }
 
@@ -61,28 +68,29 @@ void Level::update(Game *game) {
 		int t = 60;
 		if(!fall) t = tick;
 		if(SDL_GetTicks() - last >= t) {
-			current->setPosition(current->getX(), current->getY() - 1);
+			current->setRow(current->getRow()->getDown());
+			current->setY(current->getY() - 1);
 			last = SDL_GetTicks();
 		}
 	} else {
 		if(SDL_GetTicks() - last >= tick) {
-			int max_y = 0, min_y = 0;
+			std::vector<Row *> changed;
+			changed.reserve(4);
 			for(int i = 0; i < 4; i++) {
 				auto b = current->getBlock(i);
-				colors[current->getY() + b.second][current->getX() + b.first] = current->getType() + 1;
-				max_y = (max_y < b.second) ? b.second : max_y;
-				min_y = (min_y > b.second) ? b.second : min_y;
+				Row *row = resolve(current->getRow(), b.second);
+				(*row)[current->getX() + b.first] = current->getType() + 1;
+				changed.push_back(row);
 			}
-			for(int i = max_y; i >= min_y; i--) {
-				if(isRowFull(i + current->getY())) {
-					removeRow(i + current->getY());
+			for(Row *row : changed) {
+				if(row->isFull()) {
+					removeRow(row);
 					score += SCORE_PER_ROW;
 				}
+				resolve(row, 4);
 			}
-			delete current;
-			current = next;
-			current->setPosition(TETROMINO_START_POS_X, TETROMINO_START_POS_Y);
-			next = new Tetromino(game->randomInt(0, 6));
+			nextTetromino(game->randomInt(0, 6));
+			last = SDL_GetTicks();
 		}
 	}
 }
@@ -98,20 +106,32 @@ void Level::draw(Game *game, int x, int y) const {
 		SDL_RenderFillRect(game->getRenderer(), &rect);
 	}
 
+	Row *row = current->getRow();
+	for(int i = 0; i < 4; i++) {
+		if(row->getUp()) row = row->getUp();
+		else break;
+	}
+	for(int i = 0; i < (LEVEL_ROWS - 1); i++) {
+		if(row->getDown()) row = row->getDown();
+		else break;
+	}
 	for(int i = 0; i < LEVEL_ROWS; i++) {
 		for(int j = 0; j < LEVEL_COLS; j++) {
-			int c = colors[i][j];
+			int c = (*row)[j];
 			if(c != 0) {
 				int tx = j * BLOCK_WIDTH + x;
 				int ty = (i + 1) * BLOCK_HEIGHT + y;
 
 				drawBlock(game, tx, ty, c);
 			}
+			if(current->getRow() == row) {
+				drawTetramino(game, current->getX() * BLOCK_HEIGHT, (i + 1) * BLOCK_WIDTH, current);
+			}
 		}
+		row = row->getUp();
 	}
 
-	drawTetramino(game, current->getX() * BLOCK_HEIGHT, (current->getY() + 1) * BLOCK_HEIGHT, current);
-	drawTetramino(game, 14 * BLOCK_HEIGHT, 19 * BLOCK_HEIGHT, next);
+	drawTetramino(game, 14 * BLOCK_WIDTH, 19 * BLOCK_HEIGHT, next);
 
 	SDL_RenderCopy(game->getRenderer(), text_next, nullptr, &text_next_rect);
 }
@@ -141,19 +161,32 @@ bool Level::canPass(int xOffset, int yOffset) const {
 	for(int i = 0; i < 4; i++) {
 		int x = current->getX() + current->getBlock(i).first + xOffset;
 		if(x < 0 || x > LEVEL_COLS-1) return false;
-		int y = current->getY() + current->getBlock(i).second + yOffset;
-		if(y < 0) return false;
-		if(colors[y][x] != 0) return false;
+		int y = current->getBlock(i).second + yOffset;
+		Row *row = current->getRow();
+		if(y < 0) {
+			while(y != 0) {
+				if(!row->getDown()) return false;
+				row = row->getDown();
+				y++;
+			}
+		} else if(y > 0) {
+			while(y != 0) {
+				if(!row->getUp()) break;
+				row = row->getUp();
+				y--;
+			}
+		}
+		if((*row)[x] != 0) return false;
 	}
 	return true;
 }
 
 void Level::moveLeft() {
-	if(canPass(-1)) current->setPosition(current->getX() - 1, current->getY());
+	if(canPass(-1)) current->setX(current->getX() - 1);
 }
 
 void Level::moveRight() {
-	if(canPass(1)) current->setPosition(current->getX() + 1, current->getY());
+	if(canPass(1)) current->setX(current->getX() + 1);
 }
 
 void Level::rotate() {
@@ -182,6 +215,44 @@ void Level::handle(Game *game, const SDL_Event &event) {
 	}
 }
 
+Row *Level::resolve(Row *row, int y) {
+	if(y > 0) {
+		while(y != 0) {
+			if(!row->getUp()) {
+				Row *nrow = new Row();
+				nrow->setDown(row);
+				row->setUp(nrow);
+				top = nrow;
+				rows++;
+			}
+			row = row->getUp();
+			y--;
+		}
+	} else if(y < 0) {
+		while(y != 0) {
+			row = row->getDown();
+			y++;
+		}
+	}
+	return row;
+}
+
+void Level::nextTetromino(int type) {
+	delete current;
+	current = next;
+	current->setRow(top);
+	current->setX(TETROMINO_START_POS_X);
+	current->setY(rows-1);
+	next = new Tetromino(type);
+}
+
 Level::~Level() {
 	SDL_DestroyTexture(text_next);
+
+	Row *cur = top;
+	while(cur) {
+		Row *next = cur->getDown();
+		delete cur;
+		cur = next;
+	}
 }

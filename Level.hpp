@@ -18,9 +18,53 @@
 #define TETROMINO_START_POS_X 5
 #define TETROMINO_START_POS_Y 20
 
+class Row {
+	int colors[LEVEL_COLS]{0};
+	Row *up = nullptr;
+	Row *down = nullptr;
+public:
+	Row() = default;
+
+	Row *getUp() const {
+		return up;
+	}
+
+	Row *getDown() const {
+		return down;
+	}
+
+	void setUp(Row *row) {
+		up = row;
+	}
+
+	void setDown(Row *row) {
+		down = row;
+	}
+
+	bool isFull() const;
+
+	int operator[](size_t i) const {
+		return colors[i];
+	}
+
+	int &operator[](size_t i) {
+		return colors[i];
+	}
+
+	void clear() {
+		up = down = nullptr;
+		for(int &c : colors) c = 0;
+	}
+
+	~Row() = default;
+};
+
 class Level {
 	int score = 0;
-	int colors[LEVEL_ROWS][LEVEL_COLS];
+
+	Row *top;
+	Row *back;
+	int rows = LEVEL_ROWS;
 
 	Tetromino *current = nullptr;
 	Tetromino *next = nullptr;
@@ -29,13 +73,11 @@ class Level {
 	SDL_Rect text_next_rect{};
 
 	Uint32 last = 0;
-
 	bool fall = false;
 public:
 	explicit Level(Game *game);
 
-	bool isRowFull(int row) const;
-	void removeRow(int row);
+	void removeRow(Row *row);
 
 	SDL_Color getColor(int c) const;
 
@@ -52,6 +94,10 @@ public:
 	void moveLeft();
 	void moveRight();
 	void rotate();
+
+	Row *resolve(Row *row, int y);
+
+	void nextTetromino(int type);
 
 	int getScore() const {
 		return score;

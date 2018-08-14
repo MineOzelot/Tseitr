@@ -58,6 +58,9 @@ public:
 	int randomInt(int min = 0, int max = 100);
 
 	~Game();
+
+	static constexpr SDL_Color COLOR_WHITE = {0xff, 0xff, 0xff, 0xff};
+	static constexpr SDL_Color TEXT_COLOR  = {0x10, 0x10, 0x10, 0xff};
 private:
 	void loop();
 	void input();

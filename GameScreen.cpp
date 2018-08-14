@@ -11,15 +11,15 @@
 void GameScreen::init(Game *game) {
 	level = new Level(game);
 
-	text_paused = game->renderText(game->getFont16(), TEXT_PAUSED, SDL_Color{0x10, 0x10, 0x10, 0xff}, text_paused_rect.w, text_paused_rect.h);
+	text_paused = game->renderText(game->getFont16(), TEXT_PAUSED, Game::TEXT_COLOR, text_paused_rect.w, text_paused_rect.h);
 	text_paused_rect.x = 390;
 	text_paused_rect.y = 4;
 
-	text_score = game->renderText(game->getFont16(), TEXT_SCORE, SDL_Color{0x10, 0x10, 0x10, 0xff}, text_score_rect.w, text_score_rect.h);
+	text_score = game->renderText(game->getFont16(), TEXT_SCORE, Game::TEXT_COLOR, text_score_rect.w, text_score_rect.h);
 	text_score_rect.x = 390;
 	text_score_rect.y = 128;
 
-	text_score_v = game->renderText(game->getFont16(), std::to_string(level->getScore()).c_str(), SDL_Color{0x10, 0x10, 0x10, 0xff}, text_score_v_rect.w, text_score_v_rect.h);
+	text_score_v = game->renderText(game->getFont16(), std::to_string(level->getScore()).c_str(), Game::TEXT_COLOR, text_score_v_rect.w, text_score_v_rect.h);
 	text_score_v_rect.x = text_score_rect.x + text_score_rect.w + 8;
 	text_score_v_rect.y = text_score_rect.y;
 }
@@ -34,7 +34,7 @@ void GameScreen::update(Game *game) {
 	level->update(game);
 	if(score != level->getScore()) {
 		SDL_DestroyTexture(text_score_v);
-		text_score_v = game->renderText(game->getFont16(), std::to_string(level->getScore()).c_str(), SDL_Color{0x10, 0x10, 0x10, 0xff}, text_score_v_rect.w, text_score_v_rect.h);
+		text_score_v = game->renderText(game->getFont16(), std::to_string(level->getScore()).c_str(), Game::TEXT_COLOR, text_score_v_rect.w, text_score_v_rect.h);
 	}
 }
 
