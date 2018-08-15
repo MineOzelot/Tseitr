@@ -2,6 +2,8 @@
 // Created by mineozelot on 8/12/18.
 //
 
+#include <iostream>
+#include <unordered_set>
 #include "Level.hpp"
 
 #define TEXT_NEXT "Next:"
@@ -33,9 +35,10 @@ Level::Level(Game *game) {
 	text_next_rect.y = 10;
 }
 
-void Level::removeRow(Row *row) {
-	if(row->getUp()) row->getUp()->setDown(row->getDown());
-	else top = row->getDown();
+Row *Level::removeRow(Row *row) {
+	Row *ret;
+	if(row->getUp()) (ret = row->getUp())->setDown(row->getDown());
+	else ret = top = row->getDown();
 	if(row->getDown()) row->getDown()->setUp(row->getUp());
 	else back = row->getUp();
 	if(rows <= LEVEL_ROWS) {
@@ -47,6 +50,7 @@ void Level::removeRow(Row *row) {
 		rows--;
 		delete row;
 	}
+	return ret;
 }
 
 SDL_Color Level::getColor(int c) const {
@@ -74,17 +78,16 @@ void Level::update(Game *game) {
 		}
 	} else {
 		if(SDL_GetTicks() - last >= tick) {
-			std::vector<Row *> changed;
-			changed.reserve(4);
+			std::unordered_set<Row *> changed;
 			for(int i = 0; i < 4; i++) {
 				auto b = current->getBlock(i);
 				Row *row = resolve(current->getRow(), b.second);
-				(*row)[current->getX() + b.first] = current->getType() + 1;
-				changed.push_back(row);
+				row->set(current->getX() + b.first, current->getType() + 1);
+				changed.insert(row);
 			}
 			for(Row *row : changed) {
 				if(row->isFull()) {
-					removeRow(row);
+					row = removeRow(row);
 					score += SCORE_PER_ROW;
 				}
 				resolve(row, 4);
@@ -117,7 +120,7 @@ void Level::draw(Game *game, int x, int y) const {
 	}
 	for(int i = 0; i < LEVEL_ROWS; i++) {
 		for(int j = 0; j < LEVEL_COLS; j++) {
-			int c = (*row)[j];
+			int c = row->get(j);
 			if(c != 0) {
 				int tx = j * BLOCK_WIDTH + x;
 				int ty = (i + 1) * BLOCK_HEIGHT + y;
@@ -176,7 +179,7 @@ bool Level::canPass(int xOffset, int yOffset) const {
 				y--;
 			}
 		}
-		if((*row)[x] != 0) return false;
+		if(row->get(x) != 0) return false;
 	}
 	return true;
 }
@@ -216,9 +219,11 @@ void Level::handle(Game *game, const SDL_Event &event) {
 }
 
 Row *Level::resolve(Row *row, int y) {
+	int newrows = 0;
 	if(y > 0) {
 		while(y != 0) {
 			if(!row->getUp()) {
+				newrows++;
 				Row *nrow = new Row();
 				nrow->setDown(row);
 				row->setUp(nrow);

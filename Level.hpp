@@ -16,7 +16,6 @@
 #define BLOCK_WIDTH  (LEVEL_WIDTH / LEVEL_COLS)
 #define BLOCK_HEIGHT (LEVEL_HEIGHT / LEVEL_ROWS)
 #define TETROMINO_START_POS_X 5
-#define TETROMINO_START_POS_Y 20
 
 class Row {
 	int colors[LEVEL_COLS]{0};
@@ -43,12 +42,12 @@ public:
 
 	bool isFull() const;
 
-	int operator[](size_t i) const {
+	int get(int i) const {
 		return colors[i];
 	}
 
-	int &operator[](size_t i) {
-		return colors[i];
+	void set(int i, int c) {
+		colors[i] = c;
 	}
 
 	void clear() {
@@ -77,7 +76,7 @@ class Level {
 public:
 	explicit Level(Game *game);
 
-	void removeRow(Row *row);
+	Row *removeRow(Row *row);
 
 	SDL_Color getColor(int c) const;
 
