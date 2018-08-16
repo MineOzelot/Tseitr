@@ -10,6 +10,8 @@
 
 #define SCORE_PER_ROW 40
 #define SCORE_SPEED_MULT 0.05F
+#define MINIMAP_BLOCK_SIZE 5
+#define MINIMAP_ROWS (LEVEL_HEIGHT / MINIMAP_BLOCK_SIZE)
 
 bool Row::isFull() const {
 	for(int c : colors) {
@@ -98,14 +100,14 @@ void Level::update(Game *game) {
 	}
 }
 
-void Level::draw(Game *game, int x, int y) const {
+void Level::draw(Game *game) const {
 	SDL_SetRenderDrawColor(game->getRenderer(), 0xfa, 0xfa, 0xfa, 0xff);
-	SDL_Rect rect = {x, y, LEVEL_WIDTH, LEVEL_HEIGHT};
+	SDL_Rect rect = {0, 0, LEVEL_WIDTH, LEVEL_HEIGHT};
 	SDL_RenderFillRect(game->getRenderer(), &rect);
 
 	SDL_SetRenderDrawColor(game->getRenderer(), 0xed, 0xed, 0xed, 0xff);
 	for(int i = 1; i < LEVEL_COLS; i += 2) {
-		rect = {x + i * BLOCK_WIDTH, y, BLOCK_WIDTH, LEVEL_HEIGHT};
+		rect = {i * BLOCK_WIDTH, 0, BLOCK_WIDTH, LEVEL_HEIGHT};
 		SDL_RenderFillRect(game->getRenderer(), &rect);
 	}
 
@@ -122,19 +124,51 @@ void Level::draw(Game *game, int x, int y) const {
 		for(int j = 0; j < LEVEL_COLS; j++) {
 			int c = row->get(j);
 			if(c != 0) {
-				int tx = j * BLOCK_WIDTH + x;
-				int ty = (i + 1) * BLOCK_HEIGHT + y;
+				int tx = j * BLOCK_WIDTH;
+				int ty = (i + 1) * BLOCK_HEIGHT;
 
 				drawBlock(game, tx, ty, c);
 			}
 			if(current->getRow() == row) {
-				drawTetramino(game, current->getX() * BLOCK_HEIGHT, (i + 1) * BLOCK_WIDTH, current);
+				drawTetromino(game, current->getX() * BLOCK_HEIGHT, (i + 1) * BLOCK_WIDTH, current);
 			}
 		}
 		row = row->getUp();
 	}
 
-	drawTetramino(game, 14 * BLOCK_WIDTH, 19 * BLOCK_HEIGHT, next);
+	row = current->getRow();
+	for(int i = 0; i < 10; i++) {
+		if(row->getUp()) row = row->getUp();
+		else break;
+	}
+	for(int i = 0; i < (MINIMAP_ROWS - 1); i++) {
+		if(row->getDown()) row = row->getDown();
+		else break;
+	}
+	for(int i = 0; row; i++) {
+		for(int j = 0; j < LEVEL_COLS; j++) {
+			int c = row->get(j);
+			if(c != 0) {
+				drawMiniblock(game, j, i, c);
+			}
+		}
+		if(current->getRow() == row) {
+			for(int k = 0; k < 4; k++) {
+				auto block = current->getBlock(k);
+				drawMiniblock(game, current->getX() + block.first, i + block.second, current->getType() + 1);
+			}
+		}
+		row = row->getUp();
+	}
+
+	SDL_SetRenderDrawColor(game->getRenderer(), 0x10, 0x10, 0x10, 0xff);
+	SDL_RenderDrawLine(
+			game->getRenderer(),
+			WIN_WIDTH - LEVEL_COLS * MINIMAP_BLOCK_SIZE - 1, 0,
+			WIN_WIDTH - LEVEL_COLS * MINIMAP_BLOCK_SIZE - 1, WIN_HEIGHT
+	);
+
+	drawTetromino(game, 14 * BLOCK_WIDTH, 19 * BLOCK_HEIGHT, next);
 
 	SDL_RenderCopy(game->getRenderer(), text_next, nullptr, &text_next_rect);
 }
@@ -153,7 +187,18 @@ void Level::drawBlock(Game *game, int x, int y, int c) const {
 	SDL_RenderDrawRect(game->getRenderer(), &rect);
 }
 
-void Level::drawTetramino(Game *game, int x, int y, const Tetromino *tetromino) const {
+void Level::drawMiniblock(Game *game, int x, int y, int c) const {
+	SDL_Color col = getColor(c);
+	SDL_SetRenderDrawColor(game->getRenderer(), col.r, col.g, col.b, col.a);
+	SDL_Rect rect = {
+			WIN_WIDTH - LEVEL_COLS * MINIMAP_BLOCK_SIZE + x * MINIMAP_BLOCK_SIZE,
+			WIN_HEIGHT - (y + 1) * MINIMAP_BLOCK_SIZE,
+			MINIMAP_BLOCK_SIZE, MINIMAP_BLOCK_SIZE
+	};
+	SDL_RenderFillRect(game->getRenderer(), &rect);
+}
+
+void Level::drawTetromino(Game *game, int x, int y, const Tetromino *tetromino) const {
 	for(int i = 0; i < 4; i++) {
 		auto block = tetromino->getBlock(i);
 		drawBlock(game, x + block.first * BLOCK_WIDTH, y + block.second * BLOCK_HEIGHT, tetromino->getType() + 1);
@@ -219,11 +264,9 @@ void Level::handle(Game *game, const SDL_Event &event) {
 }
 
 Row *Level::resolve(Row *row, int y) {
-	int newrows = 0;
 	if(y > 0) {
 		while(y != 0) {
 			if(!row->getUp()) {
-				newrows++;
 				Row *nrow = new Row();
 				nrow->setDown(row);
 				row->setUp(nrow);

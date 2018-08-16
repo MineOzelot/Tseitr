@@ -82,9 +82,10 @@ public:
 
 	void update(Game *game);
 
-	void draw(Game *game, int x, int y) const;
+	void draw(Game *game) const;
 	void drawBlock(Game *game, int x, int y, int c) const;
-	void drawTetramino(Game *game, int x, int y, const Tetromino *tetromino) const;
+	void drawMiniblock(Game *game, int x, int y, int c) const;
+	void drawTetromino(Game *game, int x, int y, const Tetromino *tetromino) const;
 
 	bool canPass(int xOffset = 0, int yOffset = 0) const;
 

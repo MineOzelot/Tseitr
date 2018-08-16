@@ -41,7 +41,7 @@ void GameScreen::update(Game *game) {
 void GameScreen::render(Game *game) {
 	SDL_SetRenderDrawColor(game->getRenderer(), 0xff, 0xff, 0xff, 0xff);
 	SDL_RenderClear(game->getRenderer());
-	level->draw(game, 0, 0);
+	level->draw(game);
 
 	if(paused) {
 		SDL_RenderCopy(game->getRenderer(), text_paused, nullptr, &text_paused_rect);
