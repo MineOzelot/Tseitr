@@ -59,7 +59,7 @@ public:
 };
 
 class Level {
-	int score = 0;
+	int score = 100;
 
 	Row *top;
 	Row *back;
@@ -71,8 +71,12 @@ class Level {
 	SDL_Texture *text_next = nullptr;
 	SDL_Rect text_next_rect{};
 
+	SDL_Texture *text_gameover = nullptr;
+	SDL_Rect text_gameover_rect{};
+
 	Uint32 last = 0;
 	bool fall = false;
+	bool gameover = false;
 public:
 	explicit Level(Game *game);
 

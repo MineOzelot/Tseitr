@@ -35,6 +35,7 @@ void GameScreen::update(Game *game) {
 	if(score != level->getScore()) {
 		SDL_DestroyTexture(text_score_v);
 		text_score_v = game->renderText(game->getFont16(), std::to_string(level->getScore()).c_str(), Game::TEXT_COLOR, text_score_v_rect.w, text_score_v_rect.h);
+		score = level->getScore();
 	}
 }
 

@@ -7,11 +7,14 @@
 #include "Level.hpp"
 
 #define TEXT_NEXT "Next:"
+#define TEXT_GAMEOVER "Game Over"
 
 #define SCORE_PER_ROW 40
 #define SCORE_SPEED_MULT 0.05F
 #define MINIMAP_BLOCK_SIZE 5
 #define MINIMAP_ROWS (LEVEL_HEIGHT / MINIMAP_BLOCK_SIZE)
+
+#define TETROMINO_COST 10
 
 bool Row::isFull() const {
 	for(int c : colors) {
@@ -35,6 +38,10 @@ Level::Level(Game *game) {
 	text_next = game->renderText(game->getFont16(), TEXT_NEXT, Game::TEXT_COLOR, text_next_rect.w, text_next_rect.h);
 	text_next_rect.x = 14 * BLOCK_WIDTH;
 	text_next_rect.y = 10;
+
+	text_gameover = game->renderText(game->getFont16(), TEXT_GAMEOVER, Game::TEXT_COLOR, text_gameover_rect.w, text_gameover_rect.h);
+	text_gameover_rect.x = 14 * BLOCK_WIDTH;
+	text_gameover_rect.y = 160;
 }
 
 Row *Level::removeRow(Row *row) {
@@ -69,33 +76,35 @@ SDL_Color Level::getColor(int c) const {
 }
 
 void Level::update(Game *game) {
-	int tick = static_cast<int>(LEVEL_TICK - score * SCORE_SPEED_MULT);
-	if(canPass(0, -1)) {
-		int t = 60;
-		if(!fall) t = tick;
-		if(SDL_GetTicks() - last >= t) {
-			current->setRow(current->getRow()->getDown());
-			current->setY(current->getY() - 1);
-			last = SDL_GetTicks();
-		}
-	} else {
-		if(SDL_GetTicks() - last >= tick) {
-			std::unordered_set<Row *> changed;
-			for(int i = 0; i < 4; i++) {
-				auto b = current->getBlock(i);
-				Row *row = resolve(current->getRow(), b.second);
-				row->set(current->getX() + b.first, current->getType() + 1);
-				changed.insert(row);
+	if(!gameover) {
+		int tick = static_cast<int>(LEVEL_TICK - score * SCORE_SPEED_MULT);
+		if(canPass(0, -1)) {
+			int t = 60;
+			if(!fall) t = tick;
+			if(SDL_GetTicks() - last >= t) {
+				current->setRow(current->getRow()->getDown());
+				current->setY(current->getY() - 1);
+				last = SDL_GetTicks();
 			}
-			for(Row *row : changed) {
-				if(row->isFull()) {
-					row = removeRow(row);
-					score += SCORE_PER_ROW;
+		} else {
+			if(SDL_GetTicks() - last >= tick) {
+				std::unordered_set<Row *> changed;
+				for(int i = 0; i < 4; i++) {
+					auto b = current->getBlock(i);
+					Row *row = resolve(current->getRow(), b.second);
+					row->set(current->getX() + b.first, current->getType() + 1);
+					changed.insert(row);
 				}
-				resolve(row, 4);
+				for(Row *row : changed) {
+					if(row->isFull()) {
+						row = removeRow(row);
+						score += SCORE_PER_ROW;
+					}
+					resolve(row, 4);
+				}
+				nextTetromino(game->randomInt(0, 6));
+				last = SDL_GetTicks();
 			}
-			nextTetromino(game->randomInt(0, 6));
-			last = SDL_GetTicks();
 		}
 	}
 }
@@ -111,7 +120,7 @@ void Level::draw(Game *game) const {
 		SDL_RenderFillRect(game->getRenderer(), &rect);
 	}
 
-	Row *row = current->getRow();
+	Row *row = (current ? current->getRow() : top);
 	for(int i = 0; i < 4; i++) {
 		if(row->getUp()) row = row->getUp();
 		else break;
@@ -129,14 +138,14 @@ void Level::draw(Game *game) const {
 
 				drawBlock(game, tx, ty, c);
 			}
-			if(current->getRow() == row) {
+			if(current && current->getRow() == row) {
 				drawTetromino(game, current->getX() * BLOCK_HEIGHT, (i + 1) * BLOCK_WIDTH, current);
 			}
 		}
 		row = row->getUp();
 	}
 
-	row = current->getRow();
+	row = (current ? current->getRow() : top);
 	for(int i = 0; i < 10; i++) {
 		if(row->getUp()) row = row->getUp();
 		else break;
@@ -152,7 +161,7 @@ void Level::draw(Game *game) const {
 				drawMiniblock(game, j, i, c);
 			}
 		}
-		if(current->getRow() == row) {
+		if(current && current->getRow() == row) {
 			for(int k = 0; k < 4; k++) {
 				auto block = current->getBlock(k);
 				drawMiniblock(game, current->getX() + block.first, i + block.second, current->getType() + 1);
@@ -171,6 +180,9 @@ void Level::draw(Game *game) const {
 	drawTetromino(game, 14 * BLOCK_WIDTH, 19 * BLOCK_HEIGHT, next);
 
 	SDL_RenderCopy(game->getRenderer(), text_next, nullptr, &text_next_rect);
+	if(gameover) {
+		SDL_RenderCopy(game->getRenderer(), text_gameover, nullptr, &text_gameover_rect);
+	}
 }
 
 void Level::drawBlock(Game *game, int x, int y, int c) const {
@@ -243,23 +255,26 @@ void Level::rotate() {
 }
 
 void Level::handle(Game *game, const SDL_Event &event) {
-	switch(event.type) {
-		case SDL_KEYDOWN:
-			if(event.key.keysym.scancode == SDL_SCANCODE_LEFT) {
-				moveLeft();
-			} else if(event.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
-				moveRight();
-			} else if(event.key.keysym.scancode == SDL_SCANCODE_UP) {
-				rotate();
-			} else if(event.key.keysym.scancode == SDL_SCANCODE_DOWN) {
-				fall = true;
-			}
-			break;
-		case SDL_KEYUP:
-			if(event.key.keysym.scancode == SDL_SCANCODE_DOWN) {
-				fall = false;
-			}
-		default: break;
+	if(!gameover) {
+		switch(event.type) {
+			case SDL_KEYDOWN:
+				if(event.key.keysym.scancode == SDL_SCANCODE_LEFT) {
+					moveLeft();
+				} else if(event.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
+					moveRight();
+				} else if(event.key.keysym.scancode == SDL_SCANCODE_UP) {
+					rotate();
+				} else if(event.key.keysym.scancode == SDL_SCANCODE_DOWN) {
+					fall = true;
+				}
+				break;
+			case SDL_KEYUP:
+				if(event.key.keysym.scancode == SDL_SCANCODE_DOWN) {
+					fall = false;
+				}
+			default:
+				break;
+		}
 	}
 }
 
@@ -287,6 +302,12 @@ Row *Level::resolve(Row *row, int y) {
 
 void Level::nextTetromino(int type) {
 	delete current;
+	if(score < TETROMINO_COST) {
+		current = nullptr;
+		gameover = true;
+		return;
+	}
+	score -= TETROMINO_COST;
 	current = next;
 	current->setRow(top);
 	current->setX(TETROMINO_START_POS_X);
