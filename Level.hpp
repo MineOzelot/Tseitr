@@ -7,6 +7,7 @@
 
 #include "Game.hpp"
 #include "Tetromino.hpp"
+#include "Label.hpp"
 
 #define LEVEL_ROWS 20
 #define LEVEL_COLS 12
@@ -60,19 +61,26 @@ public:
 
 class Level {
 	int score = 100;
+	int lines = 0;
+	int tetrominoes = 0;
 
 	Row *top;
 	Row *back;
+	Row *gameover_row = nullptr;
+	bool gameover_row_up = false;
 	int rows = LEVEL_ROWS;
 
 	Tetromino *current = nullptr;
 	Tetromino *next = nullptr;
 
-	SDL_Texture *text_next = nullptr;
-	SDL_Rect text_next_rect{};
-
-	SDL_Texture *text_gameover = nullptr;
-	SDL_Rect text_gameover_rect{};
+	Label *label_next = nullptr;
+	Label *label_gameover = nullptr;
+	Label *label_score = nullptr;
+	Label *label_score_value = nullptr;
+	Label *label_lines = nullptr;
+	Label *label_lines_value = nullptr;
+	Label *label_tetrominoes = nullptr;
+	Label *label_tetrominoes_value = nullptr;
 
 	Uint32 last = 0;
 	bool fall = false;
@@ -86,7 +94,7 @@ public:
 
 	void update(Game *game);
 
-	void draw(Game *game) const;
+	void draw(Game *game);
 	void drawBlock(Game *game, int x, int y, int c) const;
 	void drawMiniblock(Game *game, int x, int y, int c) const;
 	void drawTetromino(Game *game, int x, int y, const Tetromino *tetromino) const;
@@ -103,8 +111,17 @@ public:
 
 	void nextTetromino(int type);
 
-	int getScore() const {
-		return score;
+	void addScore(int add) {
+		score += add;
+		label_score_value->setText(std::to_string(score));
+	}
+	void addLines(int add) {
+		lines += add;
+		label_lines_value->setText(std::to_string(lines));
+	}
+	void addTetrominoes(int add) {
+		tetrominoes += add;
+		label_tetrominoes_value->setText(std::to_string(tetrominoes));
 	}
 
 	~Level();

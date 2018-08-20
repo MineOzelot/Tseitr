@@ -7,10 +7,10 @@
 
 #include "Screen.hpp"
 #include "Game.hpp"
+#include "Label.hpp"
 
 class StartScreen: public Screen {
-	SDL_Texture *text_start = nullptr;
-	int text_start_width = 0, text_start_height = 0;
+	Label *label_start = nullptr;
 public:
 	void init(Game *game) override;
 

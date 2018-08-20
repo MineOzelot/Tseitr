@@ -8,7 +8,9 @@
 const char *TEXT_START = "Press any key to start";
 
 void StartScreen::init(Game *game) {
-	text_start = game->renderText(game->getFont24(), TEXT_START, Game::COLOR_WHITE, text_start_width, text_start_height);
+	label_start = new Label(game->getRenderer(), TEXT_START, 0, 0, game->getFont16(), Game::COLOR_WHITE);
+	label_start->setX(WIN_WIDTH / 2 - label_start->getWidth() / 2);
+	label_start->setY(WIN_HEIGHT / 2 - label_start->getHeight() / 2);
 }
 
 void StartScreen::handle(Game *game, const SDL_Event &event) {
@@ -23,14 +25,14 @@ void StartScreen::handle(Game *game, const SDL_Event &event) {
 void StartScreen::update(Game *game) {}
 
 void StartScreen::render(Game *game) {
-	SDL_SetRenderDrawColor(game->getRenderer(), 0, 0, 0, 0xFF);
+	SDL_SetRenderDrawColor(game->getRenderer(), 0x00, 0x00, 0x00, 0xff);
 	SDL_RenderClear(game->getRenderer());
-	SDL_Rect src = {0, 0, text_start_width, text_start_height};
-	SDL_Rect dst = {WIN_WIDTH/2-text_start_width/2, WIN_HEIGHT/2-text_start_height/2, text_start_width, text_start_height};
-	SDL_RenderCopy(game->getRenderer(), text_start, &src, &dst);
+
+	label_start->draw(game->getRenderer());
+
 	SDL_RenderPresent(game->getRenderer());
 }
 
 void StartScreen::dispose() {
-	SDL_DestroyTexture(text_start);
+	delete label_start;
 }

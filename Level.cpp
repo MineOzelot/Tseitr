@@ -8,6 +8,9 @@
 
 #define TEXT_NEXT "Next:"
 #define TEXT_GAMEOVER "Game Over"
+#define TEXT_SCORE "Score:"
+#define TEXT_LINES "Lines:"
+#define TEXT_TETROMINOES "Tetrominoes:"
 
 #define SCORE_PER_ROW 40
 #define SCORE_SPEED_MULT 0.05F
@@ -32,16 +35,20 @@ Level::Level(Game *game) {
 		top = row;
 	}
 
+	label_next = new Label(game->getRenderer(), TEXT_NEXT, 14 * BLOCK_WIDTH, 10, game->getFont16());
+	label_gameover = new Label(game->getRenderer(), TEXT_GAMEOVER, 400, 108, game->getFont16());
+
+	label_score = new Label(game->getRenderer(), TEXT_SCORE, 400, 128, game->getFont16());
+	label_score_value = new Label(game->getRenderer(), std::to_string(score), label_score->getMaxX() + 8, label_score->getMinY(), game->getFont16());
+
+	label_lines = new Label(game->getRenderer(), TEXT_LINES, 400, label_score->getMaxY(), game->getFont16());
+	label_lines_value = new Label(game->getRenderer(), std::to_string(lines), label_lines->getMaxX() + 8, label_lines->getMinY(), game->getFont16());
+
+	label_tetrominoes = new Label(game->getRenderer(), TEXT_TETROMINOES, 400, label_lines->getMaxY(), game->getFont16());
+	label_tetrominoes_value = new Label(game->getRenderer(), std::to_string(tetrominoes), label_tetrominoes->getMaxX() + 8, label_tetrominoes->getMinY(), game->getFont16());
+
 	next = new Tetromino(game->randomInt(0, 6));
 	nextTetromino(game->randomInt(0, 6));
-
-	text_next = game->renderText(game->getFont16(), TEXT_NEXT, Game::TEXT_COLOR, text_next_rect.w, text_next_rect.h);
-	text_next_rect.x = 14 * BLOCK_WIDTH;
-	text_next_rect.y = 10;
-
-	text_gameover = game->renderText(game->getFont16(), TEXT_GAMEOVER, Game::TEXT_COLOR, text_gameover_rect.w, text_gameover_rect.h);
-	text_gameover_rect.x = 14 * BLOCK_WIDTH;
-	text_gameover_rect.y = 160;
 }
 
 Row *Level::removeRow(Row *row) {
@@ -98,18 +105,23 @@ void Level::update(Game *game) {
 				for(Row *row : changed) {
 					if(row->isFull()) {
 						row = removeRow(row);
-						score += SCORE_PER_ROW;
+						addScore(SCORE_PER_ROW);
+						addLines(1);
 					}
 					resolve(row, 4);
 				}
+				addTetrominoes(1);
 				nextTetromino(game->randomInt(0, 6));
 				last = SDL_GetTicks();
 			}
 		}
 	}
+	label_score_value->update(game->getRenderer());
+	label_lines_value->update(game->getRenderer());
+	label_tetrominoes_value->update(game->getRenderer());
 }
 
-void Level::draw(Game *game) const {
+void Level::draw(Game *game) {
 	SDL_SetRenderDrawColor(game->getRenderer(), 0xfa, 0xfa, 0xfa, 0xff);
 	SDL_Rect rect = {0, 0, LEVEL_WIDTH, LEVEL_HEIGHT};
 	SDL_RenderFillRect(game->getRenderer(), &rect);
@@ -120,7 +132,26 @@ void Level::draw(Game *game) const {
 		SDL_RenderFillRect(game->getRenderer(), &rect);
 	}
 
-	Row *row = (current ? current->getRow() : top);
+	Row *render_row = nullptr;
+	if(gameover) {
+		if(!gameover_row) {
+			gameover_row = top;
+		} else {
+			if(SDL_GetTicks() - last >= 1000) {
+				if(!gameover_row_up && gameover_row->getDown()) gameover_row = gameover_row->getDown();
+				else gameover_row_up = true;
+				if(gameover_row_up && gameover_row->getUp()) gameover_row = gameover_row->getUp();
+				else gameover_row_up = false;
+				last = SDL_GetTicks();
+			}
+		}
+
+		render_row = gameover_row;
+	} else {
+		render_row = current->getRow();
+	}
+
+	Row *row = render_row;
 	for(int i = 0; i < 4; i++) {
 		if(row->getUp()) row = row->getUp();
 		else break;
@@ -145,7 +176,7 @@ void Level::draw(Game *game) const {
 		row = row->getUp();
 	}
 
-	row = (current ? current->getRow() : top);
+	row = render_row;
 	for(int i = 0; i < 10; i++) {
 		if(row->getUp()) row = row->getUp();
 		else break;
@@ -179,10 +210,16 @@ void Level::draw(Game *game) const {
 
 	drawTetromino(game, 14 * BLOCK_WIDTH, 19 * BLOCK_HEIGHT, next);
 
-	SDL_RenderCopy(game->getRenderer(), text_next, nullptr, &text_next_rect);
+	label_next->draw(game->getRenderer());
 	if(gameover) {
-		SDL_RenderCopy(game->getRenderer(), text_gameover, nullptr, &text_gameover_rect);
+		label_gameover->draw(game->getRenderer());
 	}
+	label_score->draw(game->getRenderer());
+	label_score_value->draw(game->getRenderer());
+	label_lines->draw(game->getRenderer());
+	label_lines_value->draw(game->getRenderer());
+	label_tetrominoes->draw(game->getRenderer());
+	label_tetrominoes_value->draw(game->getRenderer());
 }
 
 void Level::drawBlock(Game *game, int x, int y, int c) const {
@@ -194,7 +231,7 @@ void Level::drawBlock(Game *game, int x, int y, int c) const {
 	SDL_SetRenderDrawColor(game->getRenderer(),
 	                       static_cast<Uint8>(col.r * 0.9F),
 	                       static_cast<Uint8>(col.g * 0.9F),
-	                       static_cast<Uint8>(col.b * 0.9F), 0xf
+	                       static_cast<Uint8>(col.b * 0.9F), 0xff
 	);
 	SDL_RenderDrawRect(game->getRenderer(), &rect);
 }
@@ -307,7 +344,7 @@ void Level::nextTetromino(int type) {
 		gameover = true;
 		return;
 	}
-	score -= TETROMINO_COST;
+	addScore(-TETROMINO_COST);
 	current = next;
 	current->setRow(top);
 	current->setX(TETROMINO_START_POS_X);
@@ -316,7 +353,14 @@ void Level::nextTetromino(int type) {
 }
 
 Level::~Level() {
-	SDL_DestroyTexture(text_next);
+	delete label_next;
+	delete label_gameover;
+	delete label_score;
+	delete label_score_value;
+	delete label_lines;
+	delete label_lines_value;
+	delete label_tetrominoes;
+	delete label_tetrominoes_value;
 
 	Row *cur = top;
 	while(cur) {

@@ -48,8 +48,6 @@ public:
 		return font24;
 	}
 
-	SDL_Texture *renderText(TTF_Font *font, const char *text, SDL_Color color, int &w, int &h) const;
-
 	void setScreen(std::shared_ptr<Screen> screen);
 	std::shared_ptr<Screen> getScreen() const {
 		return screen;

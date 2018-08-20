@@ -85,11 +85,3 @@ int Game::randomInt(int min, int max) {
 	std::uniform_int_distribution<int> distr(min, max);
 	return distr(eng);
 }
-
-SDL_Texture *Game::renderText(TTF_Font *font, const char *text, SDL_Color color, int &w, int &h) const {
-	SDL_Surface *surface = TTF_RenderText_Blended(getFont16(), text, color);
-	SDL_Texture *texture = SDL_CreateTextureFromSurface(getRenderer(), surface);
-	SDL_FreeSurface(surface);
-	SDL_QueryTexture(texture, nullptr, nullptr, &w, &h);
-	return texture;
-}

@@ -13,15 +13,7 @@ class GameScreen: public Screen {
 	Level *level = nullptr;
 	bool paused = false;
 
-	SDL_Texture *text_paused = nullptr;
-	SDL_Rect text_paused_rect{};
-
-	SDL_Texture *text_score = nullptr;
-	SDL_Rect text_score_rect{};
-
-	SDL_Texture *text_score_v = nullptr;
-	SDL_Rect text_score_v_rect{};
-	int score = 0;
+	Label *label_paused = nullptr;
 public:
 	void init(Game *game) override;
 
