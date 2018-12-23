@@ -10,7 +10,13 @@
 #include "Label.hpp"
 
 class StartScreen: public Screen {
-	Label *label_start = nullptr;
+	Label *label_startgame = nullptr;
+	Label *label_leaderboard = nullptr;
+	Label *label_exit = nullptr;
+
+	SDL_Rect selections[3];
+
+	int selection = 0;
 public:
 	void init(Game *game) override;
 
@@ -18,6 +24,8 @@ public:
 
 	void update(Game *game) override;
 	void render(Game *game) override;
+
+	void select(Game *game);
 
 	void pause() override {}
 	void resume() override {}

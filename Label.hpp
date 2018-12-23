@@ -32,6 +32,11 @@ public:
 		tex_rect.y = y;
 	}
 
+	void centerAt(int x, int y) {
+		setX(x - getWidth() / 2);
+		setY(y - getHeight() / 2);
+	}
+
 	int getMinX() const {
 		return tex_rect.x;
 	}
@@ -51,6 +56,8 @@ public:
 	int getHeight() const {
 		return tex_rect.h;
 	}
+
+	const SDL_Rect &getRect() const { return tex_rect; }
 
 	virtual ~Label();
 

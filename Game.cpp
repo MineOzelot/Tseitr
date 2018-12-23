@@ -37,8 +37,7 @@ Game::Game(): eng(std::random_device()()) {
 void Game::start() {
 	isRunning = true;
 
-	//TODO: setScreen(std::make_shared<StartScreen>());
-	setScreen(std::make_shared<GameScreen>());
+	setScreen(std::make_shared<StartScreen>());
 	loop();
 }
 
